@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Openwrt on My Hugo Blog</title><link>https://blog.240201.xyz/tags/openwrt/</link><description>Recent content in Openwrt on My Hugo Blog</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Sat, 24 Aug 2024 00:36:00 +0800</lastBuildDate><atom:link href="https://blog.240201.xyz/tags/openwrt/index.xml" rel="self" type="application/rss+xml"/><item><title>在Ubuntu上部署docker版openwrt旁路由并代理本机流量</title><link>https://blog.240201.xyz/p/docker-openwrt-in-my-ubuntu-minipc/</link><pubDate>Sat, 24 Aug 2024 00:36:00 +0800</pubDate><guid>https://blog.240201.xyz/p/docker-openwrt-in-my-ubuntu-minipc/</guid><description>&lt;h1 id="在-ubuntu-上部署-docker-版-openwrt-旁路由并代理本机流量">在 Ubuntu 上部署 docker 版 openwrt 旁路由并代理本机流量
+&lt;/h1>&lt;p>本次 Ubuntu 版本如下,请注意时效性&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">***@***:~$ lsb_release -a
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">No LSB modules are available.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Distributor ID: Ubuntu
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Description: Ubuntu 22.04.4 LTS
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Release: 22.04
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Codename: jammy
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="一">一
+&lt;/h2>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">sudo su -
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h3 id="下载-openwrt-镜像">下载 openwrt 镜像
+&lt;/h3>&lt;p>这里推荐 immortalwrt&lt;br>
+&lt;a class="link" href="https://mirror.nju.edu.cn/immortalwrt/" target="_blank" rel="noopener"
+>南京大学镜像&lt;/a>&lt;br>
+我使用的是 ImmortalWrt 23.05.3,x86/64&lt;br>
+下载 rootfs.tar.gz 的文件,此处为&lt;br>
+&lt;a class="link" href="https://mirror.nju.edu.cn/immortalwrt/releases/23.05.3/targets/x86/64/immortalwrt-23.05.3-x86-64-rootfs.tar.gz" target="_blank" rel="noopener"
+>immortalwrt-23.05.3-x86-64-rootfs.tar.gz&lt;/a>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">wget https://mirror.nju.edu.cn/immortalwrt/releases/23.05.3/targets/x86/64/immortalwrt-23.05.3-x86-64-rootfs.tar.gz
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>使用&lt;code>gzip -d immortalwrt-23.05.3-x86-64-rootfs.tar.gz&lt;/code>来解压&lt;br>
+直接导入 docker&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">docker import immortalwrt-23.05.3-x86-64-rootfs.tar immortalwrt:23.05.3
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="二">二
+&lt;/h2>&lt;h3 id="配置-macvlan-并执行-docker">配置 macvlan 并执行 docker
+&lt;/h3>&lt;p>我的环境是有一台&lt;code>192.168.1.1&lt;/code>的路由器，这台机器 ip 为&lt;code>192.168.1.188&lt;/code>，docker-openwrt 作为&lt;code>192.168.1.88&lt;/code>的旁路由，网卡名为&lt;code>enp3s0&lt;/code>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">ip link &lt;span class="nb">set&lt;/span> enp3s0 promisc on
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">docker network create -d macvlan --subnet 192.168.1.0/24 --gateway 192.168.1.88 -o &lt;span class="nv">parent&lt;/span>&lt;span class="o">=&lt;/span>enp3s0 openwrtnet
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">docker run --restart always --name immortalwrt -d --network openwrtnet --ip 192.168.1.88 --privileged immortalwrt:23.05.3 /sbin/init
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">docker &lt;span class="nb">exec&lt;/span> -it immortalwrt ash
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">vi /etc/config/network
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>修改&lt;code>config interface 'lan'&lt;/code>的内容&lt;br>
+例：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">config interface &amp;#39;lan&amp;#39;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> option device &amp;#39;br-lan&amp;#39;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> option proto &amp;#39;static&amp;#39;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> option ipaddr &amp;#39;192.168.1.88&amp;#39;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> option gateway &amp;#39;192.168.1.1&amp;#39;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> option netmask &amp;#39;255.255.255.0&amp;#39;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> option ip6assign &amp;#39;60&amp;#39;
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>继续执行&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">/etc/init.d/network restart
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>即可退出终端，打开浏览器&lt;/p>
+&lt;h3 id="浏览器访问">浏览器访问
+&lt;/h3>&lt;p>http://192.168.1.88&lt;br>
+输入&lt;code>root&lt;/code>，&lt;code>password&lt;/code>点登录&lt;br>
+网络&amp;gt;接口&amp;gt;lan&amp;gt;编辑&amp;gt;&lt;br>
+设备&amp;gt;eth0&lt;br>
+DHCP 服务器&amp;gt;忽略此接口&lt;br>
+(按需配置)高级设置&amp;gt;使用自定义的 DNS 服务器&amp;gt;223.5.5.5,1.1.1.1&lt;br>
+保存&lt;br>
+保存并应用&lt;br>
+系统&amp;gt;软件包&lt;br>
+&lt;em>因为这个版本的 openwrt 好像有 ssl 方面的 bug，所以我们先换不需要 https 的源，下好&lt;code>wget-ssl&lt;/code>再换回来&lt;/em>&lt;/p>
+&lt;h3 id="配置-opkg">配置 opkg
+&lt;/h3>&lt;p>配置 opkg&lt;br>
+/etc/opkg/distfeeds.conf 里面&lt;br>
+替换为&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">src/gz immortalwrt_core http://mirror.nju.edu.cn/immortalwrt/releases/23.05.3/packages/x86_64/packages
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">src/gz immortalwrt_base http://mirror.nju.edu.cn/immortalwrt/releases/23.05.3/packages/x86_64/base
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">src/gz immortalwrt_luci http://mirror.nju.edu.cn/immortalwrt/releases/23.05.3/packages/x86_64/luci
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">src/gz immortalwrt_packages http://mirror.nju.edu.cn/immortalwrt/releases/23.05.3/packages/x86_64/packages
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">src/gz immortalwrt_routing http://mirror.nju.edu.cn/immortalwrt/releases/23.05.3/packages/x86_64/routing
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">src/gz immortalwrt_telephony http://mirror.nju.edu.cn/immortalwrt/releases/23.05.3/packages/x86_64/telephony
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>保存&lt;br>
+更新列表&lt;br>
+下载并安装软件包，填入&lt;code>wget-ssl&lt;/code>点确认&lt;br>
+&lt;em>按提示完成安装&lt;/em>&lt;br>
+再次配置 opkg&lt;br>
+填回&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">src/gz immortalwrt_core https://mirrors.vsean.net/openwrt/releases/23.05.3/targets/x86/64/packages
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">src/gz immortalwrt_base https://mirrors.vsean.net/openwrt/releases/23.05.3/packages/x86_64/base
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">src/gz immortalwrt_luci https://mirrors.vsean.net/openwrt/releases/23.05.3/packages/x86_64/luci
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">src/gz immortalwrt_packages https://mirrors.vsean.net/openwrt/releases/23.05.3/packages/x86_64/packages
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">src/gz immortalwrt_routing https://mirrors.vsean.net/openwrt/releases/23.05.3/packages/x86_64/routing
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">src/gz immortalwrt_telephony https://mirrors.vsean.net/openwrt/releases/23.05.3/packages/x86_64/telephony
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>更新列表&lt;br>
+(可选)使用 openwrt&lt;/p>
+&lt;h2 id="三">三
+&lt;/h2>&lt;p>至此，你的手机就可以配置网关使其网络流量经过旁路由了，如果你就此结束，请自行持久化网卡混杂模式&lt;/p>
+&lt;h3 id="恢复-rclocal">恢复 rc.local
+&lt;/h3>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cp /usr/lib/systemd/system/rc-local.service /etc/systemd/system/
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">touch /etc/rc.local
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">chmod &lt;span class="m">755&lt;/span> /etc/rc.local
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">echo&lt;/span> &lt;span class="s1">&amp;#39;&amp;#39;&amp;#39;#!/bin/bash&amp;#39;&amp;#39;&amp;#39;&lt;/span> &amp;gt;&amp;gt; /etc/rc.local
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">vi /etc/systemd/system/rc-local.service
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>在文件最底下加入&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">[Install]
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">WantedBy=multi-user.target
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>然后&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">systemctl &lt;span class="nb">enable&lt;/span> rc-local.service
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="四">四
+&lt;/h2>&lt;h3 id="配置-docker-openwrt-与宿主机网络互通且作为宿主机网关">配置 Docker OpenWrt 与宿主机网络互通且作为宿主机网关
+&lt;/h3>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">vi /etc/rc.local
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>填入&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">ip link &lt;span class="nb">set&lt;/span> enp3s0 promisc on &amp;gt; /dev/null 2&amp;gt;&lt;span class="p">&amp;amp;&lt;/span>&lt;span class="m">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">ip link add macvlan-proxy link enp3s0 &lt;span class="nb">type&lt;/span> macvlan mode bridge
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">ip addr add 192.168.0.98 dev macvlan-proxy
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">ip link &lt;span class="nb">set&lt;/span> macvlan-proxy up
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">ip route add 192.168.1.88 dev macvlan-proxy
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">route add default gw 192.168.1.88 macvlan-proxy
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>重启，&lt;br>
+自行更改网关即可（比如使用 nmtui）&lt;/p>
+&lt;p>参考资料:&lt;br>
+&lt;a class="link" href="https://blog.simpdog.me/posts/using-docker-to-deploy-openwrt-as-a-home-router/" target="_blank" rel="noopener"
+>https://blog.simpdog.me/posts/using-docker-to-deploy-openwrt-as-a-home-router/&lt;/a>&lt;br>
+&lt;a class="link" href="https://www.cnblogs.com/king-dom/p/17371747.html" target="_blank" rel="noopener"
+>https://www.cnblogs.com/king-dom/p/17371747.html&lt;/a>&lt;br>
+&lt;a class="link" href="https://blog.csdn.net/gongchenyu/article/details/134724333" target="_blank" rel="noopener"
+>https://blog.csdn.net/gongchenyu/article/details/134724333&lt;/a>&lt;/p></description></item></channel></rss>
